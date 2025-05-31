@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Taco Bell Klantbeleving</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      font-family: sans-serif;
+      background-color: #702082; /* Taco Bell paars */
+      color: white;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: auto;
+      padding: 2rem;
+      background: rgba(255,255,255,0.95);
+      border-radius: 1rem;
+      color: #3b0a45; /* donker paars */
+    }
+
+    h1 {
+      color: #e1b12c; /* zachtere warme geel */
+      text-align: center;
+    }
+
+    input, textarea {
+      width: 100%;
+      padding: 0.5rem;
+      margin-top: 0.5rem;
+      margin-bottom: 1rem;
+      border: 1px solid #999; /* neutrale grijstint */
+      border-radius: 0.5rem;
+      color: #3b0a45;
+      background-color: white;
+    }
+
+    button {
+      width: 100%;
+      padding: 0.5rem;
+      margin-top: 0.5rem;
+      margin-bottom: 1rem;
+      border: none;
+      border-radius: 0.5rem;
+      background-color: #702082; /* paarse knop */
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: background-color 0.3s ease;
+    }
+    button:hover {
+      background-color: #4b056e;
+    }
+
+    .stars span {
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+
+    .yellow { color: #e1b12c; }
+    .gray { color: #d1d5db; }
+
+    #feedback-list {
+      margin-top: 2rem;
+    }
+
+    canvas {
+      background-color: #e9d9f3; /* lichtpaars */
+      border-radius: 0.5rem;
+      margin-top: 2rem;
+    }
+
+    label {
+      color: #3b0a45;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Uw mening over Taco Bell telt! 🌮</h1>
+
+    <label>Wat is uw naam?</label>
+    <input type="text" id="name" placeholder="Bijv. Samira of Jan" />
+
+    <label>Bij welke Taco Bell was u?</label>
+    <input type="text" id="location" placeholder="Bijv. Amsterdam" />
+
+    <label>Vertel ons over uw ervaring</label>
+    <textarea id="feedback" placeholder="Wat vond u van uw bezoek?"></textarea>
+
+    <label>Beoordeling</label>
+    <div class="stars" id="star-container"></div>
+    <div id="smiley" style="font-size: 2rem; margin-bottom: 1rem;"></div>
+
+    <button onclick="submitFeedback()">Verstuur</button>
+
+    <h2>🗂️ Recente Reviews</h2>
+    <div id="feedback-list"></div>
+
+    <canvas id="reviewChart" width="400" height="150"></canvas>
+  </div>
+
+  <script>
+    let selectedRating = 0;
+    let reviewCounts = [0, 0, 0, 0, 0];
+
+    function renderStars() {
+      const container = document.getElementById("star-container");
+      container.innerHTML = "";
+      for (let i = 1; i <= 5; i++) {
+        const star = document.createElement("span");
+        star.innerHTML = "★";
+        star.className = i <= selectedRating ? "yellow" : "gray";
+        star.onclick = () => {
+          selectedRating = i;
+          renderStars();
+          renderSmiley();
+        };
+        container.appendChild(star);
+      }
+    }
+
+    function renderSmiley() {
+      const el = document.getElementById("smiley");
+      if (selectedRating >= 4) el.innerHTML = "😊";
+      else if (selectedRating > 0 && selectedRating <= 2) el.innerHTML = "😞";
+      else el.innerHTML = "";
+    }
+
+    function updateChart() {
+      reviewChart.data.datasets[0].data = reviewCounts;
+      reviewChart.update();
+    }
+
+    function submitFeedback() {
+      const name = document.getElementById("name").value.trim();
+      const location = document.getElementById("location").value.trim();
+      const feedback = document.getElementById("feedback").value.trim();
+
+      if (!name || !location || !feedback || selectedRating === 0) {
+        alert("Vul alle velden in en kies een beoordeling.");
+        return;
+      }
+
+      reviewCounts[selectedRating - 1]++;
+      updateChart();
+
+      const entry = document.createElement("div");
+      entry.className = "feedback-entry";
+      entry.innerHTML = `
+        <strong>🙋 Naam: ${name}</strong><br/>
+        📍 ${location}<br/>
+        📝 ${feedback}<br/>
+        ⭐ ${"★".repeat(selectedRating)}${"★".repeat(5 - selectedRating)}<br/>
+        ${selectedRating >= 4 ? "😊" : selectedRating <= 2 ? "😞" : ""}
+      `;
+      document.getElementById("feedback-list").prepend(entry);
+
+      document.getElementById("name").value = "";
+      document.getElementById("location").value = "";
+      document.getElementById("feedback").value = "";
+      selectedRating = 0;
+      renderStars();
+      renderSmiley();
+    }
+
+    renderStars();
+
+    const ctx = document.getElementById('reviewChart').getContext('2d');
+    const reviewChart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: ['⭐1', '⭐2', '⭐3', '⭐4', '⭐5'],
+        datasets: [{
+          label: 'Aantal reviews per score',
+          data: reviewCounts,
+          backgroundColor: '#4b056e'  // Donker paars passend bij thema
+        }]
+      },
+      options: {
+        responsive: true,
+        scales: {
+          y: { beginAtZero: true, ticks: { stepSize: 1 } }
+        }
+      }
+    });
+  </script>
+</body>
+</html>
